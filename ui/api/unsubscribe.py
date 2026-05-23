@@ -22,15 +22,7 @@ class handler(BaseHTTPRequestHandler):
                 return self._respond(400, {"error": "Email is required."})
 
             client = _get_client()
-            result = (
-                client.table("users")
-                .update({"active": False})
-                .eq("email", email)
-                .execute()
-            )
-
-            if not result.data:
-                return self._respond(404, {"error": "Email not found in our system."})
+            client.table("users").update({"active": False}).ilike("email", email).execute()
 
             self._respond(200, {"success": True})
 
