@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Piazza Agent</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 48px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+
+    .logo {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 36px;
+      line-height: 1.5;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #999;
+      margin-bottom: 12px;
+      margin-top: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #e5e5e5;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #111;
+      margin-bottom: 14px;
+      transition: border-color 0.15s;
+      outline: none;
+    }
+
+    input:focus { border-color: #4f46e5; }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.15s;
+    }
+
+    button:hover { background: #4338ca; }
+    button:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+    .message {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .message.success {
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .message.error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .footer {
+      margin-top: 24px;
+      font-size: 12px;
+      color: #aaa;
+      text-align: center;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">📚</div>
+    <h1>Piazza Agent</h1>
+    <p class="subtitle">Get an AI-powered summary of your course Piazza posts, delivered to your inbox twice a day.</p>
+
+    <form id="form">
+      <div class="section-label">Your details</div>
+      <label>Email to receive reports</label>
+      <input type="email" id="email" placeholder="you@example.com" required />
+
+      <div class="section-label">Piazza credentials</div>
+      <label>Piazza login email</label>
+      <input type="email" id="piazza_email" placeholder="you@university.edu" required />
+      <label>Piazza password</label>
+      <input type="password" id="piazza_password" placeholder="••••••••" required />
+
+      <div class="section-label">Course</div>
+      <label>Piazza course URL</label>
+      <input type="url" id="course_url" placeholder="https://piazza.com/class/abc123xyz" required />
+
+      <button type="submit" id="btn">Sign me up</button>
+    </form>
+
+    <div class="message" id="msg"></div>
+
+    <p class="footer">Your credentials are stored securely and used only to fetch your course posts.</p>
+  </div>
+
+  <script>
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("btn");
+      const msg = document.getElementById("msg");
+
+      const courseUrl = document.getElementById("course_url").value.trim();
+      if (!courseUrl.includes("piazza.com/class/")) {
+        showMessage("Invalid Piazza URL. It should look like: https://piazza.com/class/abc123xyz", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Signing up...";
+      msg.style.display = "none";
+
+      const res = await fetch("/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: document.getElementById("email").value.trim(),
+          piazza_email: document.getElementById("piazza_email").value.trim(),
+          piazza_password: document.getElementById("piazza_password").value,
+          course_url: courseUrl,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        showMessage("You're signed up! Reports will be sent to your inbox twice a day. ✓", "success");
+        document.getElementById("form").reset();
+      } else {
+        showMessage(data.error || "Something went wrong. Please try again.", "error");
+      }
+
+      btn.disabled = false;
+      btn.textContent = "Sign me up";
+    });
+
+    function showMessage(text, type) {
+      const msg = document.getElementById("msg");
+      msg.textContent = text;
+      msg.className = "message " + type;
+      msg.style.display = "block";
+    }
+  </script>
+</body>
+</html>
