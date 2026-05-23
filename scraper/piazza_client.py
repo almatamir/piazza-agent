@@ -1,4 +1,5 @@
 import logging
+import time
 from piazza_api import Piazza
 from piazza_api.exceptions import AuthenticationError, RequestError
 
@@ -63,6 +64,7 @@ def fetch_posts(network) -> list[dict]:
             logger.warning("Skipping post %s — request error: %s", post_id, e)
         except Exception as e:
             logger.warning("Skipping post %s — unexpected error: %s", post_id, e)
+        time.sleep(0.3)
 
     logger.info("Successfully fetched %d posts", len(posts))
     return posts
