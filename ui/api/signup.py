@@ -1,6 +1,5 @@
 import json
 import os
-import sys
 from http.server import BaseHTTPRequestHandler
 
 from supabase import create_client
@@ -15,7 +14,9 @@ def _get_client():
 def _extract_course_id(url: str) -> str | None:
     if "piazza.com/class/" not in url:
         return None
-    return url.rstrip("/").split("/")[-1]
+    # Strip fragments (#), query params (?), and trailing slashes
+    url = url.split("#")[0].split("?")[0].rstrip("/")
+    return url.split("/")[-1] or None
 
 
 class handler(BaseHTTPRequestHandler):
