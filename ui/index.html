@@ -3,153 +3,443 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Piazza Agent</title>
+  <title>Piazza Agent — AI Course Assistant</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f5f5f5;
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0f;
       min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Background glow */
+    .bg-glow {
+      position: fixed;
+      top: -20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 600px;
+      background: radial-gradient(ellipse, rgba(99,102,241,0.15) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* NAV */
+    nav {
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 24px;
+      justify-content: space-between;
+      padding: 24px 0;
     }
 
-    .card {
-      background: white;
-      border-radius: 16px;
-      padding: 48px;
-      width: 100%;
-      max-width: 480px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 18px;
     }
 
-    .logo {
-      font-size: 32px;
-      margin-bottom: 8px;
+    .nav-logo span {
+      background: linear-gradient(135deg, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .badge {
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      color: #818cf8;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 99px;
+      letter-spacing: 0.05em;
+    }
+
+    /* HERO */
+    .hero {
+      text-align: center;
+      padding: 80px 0 60px;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.25);
+      color: #a5b4fc;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 99px;
+      margin-bottom: 28px;
+    }
+
+    .hero-tag::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: #818cf8;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
     }
 
     h1 {
-      font-size: 24px;
-      font-weight: 700;
-      color: #111;
-      margin-bottom: 6px;
+      font-size: clamp(36px, 6vw, 64px);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      letter-spacing: -0.03em;
     }
 
-    .subtitle {
+    h1 .gradient {
+      background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      color: #6b7280;
+      max-width: 520px;
+      margin: 0 auto 56px;
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    /* FEATURES */
+    .features {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 64px;
+      flex-wrap: wrap;
+    }
+
+    .feature-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 99px;
+      padding: 8px 16px;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+
+    .feature-pill .icon {
+      font-size: 15px;
+    }
+
+    /* MAIN LAYOUT */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: start;
+      padding-bottom: 80px;
+    }
+
+    @media (max-width: 768px) {
+      .main { grid-template-columns: 1fr; }
+      .info-side { display: none; }
+    }
+
+    /* INFO SIDE */
+    .info-side h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #f9fafb;
+    }
+
+    .info-side .desc {
+      color: #6b7280;
       font-size: 14px;
-      color: #666;
+      line-height: 1.7;
       margin-bottom: 36px;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #818cf8;
+    }
+
+    .step-content h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f3f4f6;
+      margin-bottom: 3px;
+    }
+
+    .step-content p {
+      font-size: 13px;
+      color: #6b7280;
       line-height: 1.5;
     }
 
-    .section-label {
-      font-size: 11px;
+    .divider {
+      width: 1px;
+      height: 20px;
+      background: rgba(99,102,241,0.2);
+      margin-left: 16px;
+    }
+
+    /* FORM CARD */
+    .form-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 36px;
+      backdrop-filter: blur(12px);
+    }
+
+    .form-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .form-card .form-sub {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 28px;
+    }
+
+    .field-group {
+      margin-bottom: 20px;
+    }
+
+    .field-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #999;
-      margin-bottom: 12px;
+      letter-spacing: 0.07em;
+      color: #4b5563;
+      margin-bottom: 10px;
       margin-top: 24px;
     }
+
+    .field-label:first-child { margin-top: 0; }
 
     label {
       display: block;
       font-size: 13px;
       font-weight: 500;
-      color: #333;
+      color: #9ca3af;
       margin-bottom: 6px;
     }
 
     input {
       width: 100%;
-      padding: 10px 14px;
-      border: 1.5px solid #e5e5e5;
-      border-radius: 8px;
+      padding: 11px 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 10px;
       font-size: 14px;
-      color: #111;
-      margin-bottom: 14px;
-      transition: border-color 0.15s;
+      color: #f9fafb;
+      margin-bottom: 10px;
       outline: none;
+      transition: border-color 0.15s, background 0.15s;
+      font-family: inherit;
     }
 
-    input:focus { border-color: #4f46e5; }
+    input::placeholder { color: #374151; }
+
+    input:focus {
+      border-color: rgba(99,102,241,0.5);
+      background: rgba(99,102,241,0.05);
+    }
 
     button {
       width: 100%;
-      padding: 12px;
-      background: #4f46e5;
+      padding: 13px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
       margin-top: 8px;
-      transition: background 0.15s;
+      transition: opacity 0.15s, transform 0.1s;
+      font-family: inherit;
+      letter-spacing: -0.01em;
     }
 
-    button:hover { background: #4338ca; }
-    button:disabled { background: #a5b4fc; cursor: not-allowed; }
+    button:hover { opacity: 0.9; transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
     .message {
-      margin-top: 16px;
+      margin-top: 14px;
       padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 14px;
+      border-radius: 10px;
+      font-size: 13px;
       display: none;
+      line-height: 1.5;
     }
 
     .message.success {
-      background: #f0fdf4;
-      color: #166534;
-      border: 1px solid #bbf7d0;
+      background: rgba(16,185,129,0.1);
+      color: #6ee7b7;
+      border: 1px solid rgba(16,185,129,0.2);
     }
 
     .message.error {
-      background: #fef2f2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
+      background: rgba(239,68,68,0.1);
+      color: #fca5a5;
+      border: 1px solid rgba(239,68,68,0.2);
     }
 
-    .footer {
-      margin-top: 24px;
-      font-size: 12px;
-      color: #aaa;
-      text-align: center;
-      line-height: 1.6;
+    .privacy {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      font-size: 11px;
+      color: #374151;
     }
+
+    .privacy svg { flex-shrink: 0; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="logo">📚</div>
-    <h1>Piazza Agent</h1>
-    <p class="subtitle">Get an AI-powered summary of your course Piazza posts, delivered to your inbox twice a day.</p>
+  <div class="bg-glow"></div>
 
-    <form id="form">
-      <div class="section-label">Your details</div>
-      <label>Email to receive reports</label>
-      <input type="email" id="email" placeholder="you@example.com" required />
+  <div class="container">
+    <nav>
+      <div class="nav-logo">
+        <span>Piazza Agent</span>
+      </div>
+      <div class="badge">AI-POWERED</div>
+    </nav>
 
-      <div class="section-label">Piazza credentials</div>
-      <label>Piazza login email</label>
-      <input type="email" id="piazza_email" placeholder="you@university.edu" required />
-      <label>Piazza password</label>
-      <input type="password" id="piazza_password" placeholder="••••••••" required />
+    <div class="hero">
+      <div class="hero-tag">Runs automatically, twice a day</div>
+      <h1>Never miss a<br><span class="gradient">Piazza update</span></h1>
+      <p class="hero-sub">
+        AI reads every new post on your course Piazza and delivers a smart, structured summary straight to your inbox.
+      </p>
+      <div class="features">
+        <div class="feature-pill"><span class="icon">⚡</span> Instant summaries</div>
+        <div class="feature-pill"><span class="icon">🔗</span> Linked to source posts</div>
+        <div class="feature-pill"><span class="icon">📋</span> Pre-submission checklist</div>
+        <div class="feature-pill"><span class="icon">🔒</span> Private & secure</div>
+      </div>
+    </div>
 
-      <div class="section-label">Course</div>
-      <label>Piazza course URL</label>
-      <input type="url" id="course_url" placeholder="https://piazza.com/class/abc123xyz" required />
+    <div class="main">
+      <div class="info-side">
+        <h2>How it works</h2>
+        <p class="desc">Set it up once and forget about it. The agent runs in the background and keeps you up to date.</p>
 
-      <button type="submit" id="btn">Sign me up</button>
-    </form>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <h4>Sign up below</h4>
+              <p>Enter your email and Piazza credentials. Takes 30 seconds.</p>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <h4>Agent scans your course</h4>
+              <p>Every morning and afternoon, it reads all new posts and instructor answers.</p>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <h4>You get a clear report</h4>
+              <p>Topics grouped by theme, open questions flagged, and a pre-submission checklist — all with links to original posts.</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <div class="message" id="msg"></div>
+      <div class="form-card">
+        <h3>Get started free</h3>
+        <p class="form-sub">Reports delivered twice a day, automatically.</p>
 
-    <p class="footer">Your credentials are stored securely and used only to fetch your course posts.</p>
+        <form id="form">
+          <div class="field-label">Your details</div>
+          <label>Email to receive reports</label>
+          <input type="email" id="email" placeholder="you@example.com" required />
+
+          <div class="field-label">Piazza credentials</div>
+          <label>Piazza login email</label>
+          <input type="email" id="piazza_email" placeholder="you@university.edu" required />
+          <label>Piazza password</label>
+          <input type="password" id="piazza_password" placeholder="••••••••" required />
+
+          <div class="field-label">Course</div>
+          <label>Piazza course URL</label>
+          <input type="text" id="course_url" placeholder="https://piazza.com/class/abc123xyz" required />
+
+          <button type="submit" id="btn">Start receiving reports →</button>
+        </form>
+
+        <div class="message" id="msg"></div>
+
+        <div class="privacy">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Credentials are stored securely and used only to fetch your posts.
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -160,35 +450,39 @@
 
       const courseUrl = document.getElementById("course_url").value.trim();
       if (!courseUrl.includes("piazza.com/class/")) {
-        showMessage("Invalid Piazza URL. It should look like: https://piazza.com/class/abc123xyz", "error");
+        showMessage("Invalid Piazza URL — should look like: https://piazza.com/class/abc123xyz", "error");
         return;
       }
 
       btn.disabled = true;
-      btn.textContent = "Signing up...";
+      btn.textContent = "Setting up your agent...";
       msg.style.display = "none";
 
-      const res = await fetch("/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: document.getElementById("email").value.trim(),
-          piazza_email: document.getElementById("piazza_email").value.trim(),
-          piazza_password: document.getElementById("piazza_password").value,
-          course_url: courseUrl,
-        }),
-      });
+      try {
+        const res = await fetch("/api/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: document.getElementById("email").value.trim(),
+            piazza_email: document.getElementById("piazza_email").value.trim(),
+            piazza_password: document.getElementById("piazza_password").value,
+            course_url: courseUrl,
+          }),
+        });
 
-      const data = await res.json();
-      if (res.ok) {
-        showMessage("You're signed up! Reports will be sent to your inbox twice a day. ✓", "success");
-        document.getElementById("form").reset();
-      } else {
-        showMessage(data.error || "Something went wrong. Please try again.", "error");
+        const data = await res.json();
+        if (res.ok) {
+          showMessage("You're all set! Your first report will arrive within the next 12 hours. ✓", "success");
+          document.getElementById("form").reset();
+        } else {
+          showMessage(data.error || "Something went wrong. Please try again.", "error");
+        }
+      } catch {
+        showMessage("Connection error. Please try again.", "error");
       }
 
       btn.disabled = false;
-      btn.textContent = "Sign me up";
+      btn.textContent = "Start receiving reports →";
     });
 
     function showMessage(text, type) {
