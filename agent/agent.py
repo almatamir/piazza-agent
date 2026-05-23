@@ -37,11 +37,11 @@ def run(tag: str = "hw1") -> None:
     report_path = f"reports/summary_{tag}_{datetime.now().strftime('%Y-%m-%d_%H-%M')}.md"
     os.makedirs("reports", exist_ok=True)
 
-    header = (
-        f"# Piazza Report — {tag}\n"
-        f"Generated: {timestamp} | New posts: {len(tagged)}\n\n---\n\n"
+    full_report = (
+        f"# Piazza Report\n\n"
+        + summary
+        + f"\n\n---\n\nGenerated: {timestamp} | New posts: {len(tagged)}"
     )
-    full_report = header + summary
 
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(full_report)

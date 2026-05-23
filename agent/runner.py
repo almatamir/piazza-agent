@@ -60,9 +60,9 @@ def run_for_user(user: dict) -> None:
     timestamp = datetime.now().strftime("%Y-%m-%d")
     subject = f"{settings.EMAIL_SUBJECT} — {timestamp}"
     full_report = (
-        f"# Piazza Report\n"
-        f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')} | New posts: {len(new_posts)}\n\n---\n\n"
+        f"# Piazza Report\n\n"
         + summary
+        + f"\n\n---\n\nGenerated: {datetime.now().strftime('%Y-%m-%d %H:%M')} | New posts: {len(new_posts)}"
     )
 
     original_notify = settings.NOTIFY_EMAIL
