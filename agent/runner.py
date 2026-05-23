@@ -48,8 +48,8 @@ def run_for_user(user: dict) -> None:
         return
 
     timestamp = datetime.now().strftime("%Y-%m-%d")
-    course_label = f" | {course_name}" if course_name else ""
-    subject = f"Piazza Report{course_label} — {timestamp}"
+    course_label = course_name or course_id
+    subject = f"Piazza Report | {course_label} — {timestamp}"
     full_report = (
         summary
         + f"\n\n---\n\nGenerated: {datetime.now().strftime('%Y-%m-%d %H:%M')} | New posts: {len(new_posts)}"

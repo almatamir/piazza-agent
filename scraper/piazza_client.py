@@ -27,6 +27,14 @@ def get_network(piazza_email: str, piazza_password: str, course_id: str):
 
 def get_course_name(network) -> str:
     try:
+        info = network._rpc.request("network.get", {"id": network._nid})
+        result = info.get("result", {})
+        name = result.get("name") or result.get("num") or ""
+        if name.strip():
+            return name.strip()
+    except Exception:
+        pass
+    try:
         info = network.get_info()
         result = info.get("result", {})
         name = result.get("name") or result.get("num") or ""
