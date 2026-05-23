@@ -13,10 +13,10 @@ logger = logging.getLogger(__name__)
 def run_for_user(user: dict) -> None:
     user_id = user["id"]
     email = user["email"]
-    last_post_nr = user.get("last_post_nr", 0)
+    last_post_nr = user.get("last_post_nr") or 0
     course_id = user["piazza_course_id"]
 
-    logger.info("Running for user %s (course: %s, last_nr: %d)", email, course_id, last_post_nr)
+    logger.info("Running for user %s (course: %s, last_nr: %s)", email, course_id, last_post_nr)
 
     try:
         network = get_network(user["piazza_email"], user["piazza_password"], course_id)
