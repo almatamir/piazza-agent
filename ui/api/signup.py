@@ -54,12 +54,12 @@ class handler(BaseHTTPRequestHandler):
                 return self._respond(400, {"error": "Invalid Piazza URL."})
 
             client = _get_client()
-            client.table("users").upsert({
+            client.table("users").insert({
                 "email": email,
                 "piazza_email": piazza_email,
                 "piazza_password": piazza_password,
                 "piazza_course_id": course_id,
-            }, on_conflict="email,piazza_course_id").execute()
+            }).execute()
 
             try:
                 _trigger_workflow()
