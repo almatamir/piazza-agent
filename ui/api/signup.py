@@ -1,8 +1,23 @@
 import json
 import os
+import urllib.request
 from http.server import BaseHTTPRequestHandler
 
 from supabase import create_client
+
+
+def _trigger_workflow() -> None:
+    token = os.environ.get("GITHUB_TOKEN", "")
+    repo = os.environ.get("GITHUB_REPO", "")
+    if not token or not repo:
+        return
+    url = f"https://api.github.com/repos/{repo}/actions/workflows/agent.yml/dispatches"
+    payload = json.dumps({"ref": "main"}).encode()
+    req = urllib.request.Request(url, data=payload, method="POST")
+    req.add_header("Authorization", f"Bearer {token}")
+    req.add_header("Accept", "application/vnd.github+json")
+    req.add_header("Content-Type", "application/json")
+    urllib.request.urlopen(req, timeout=5)
 
 
 def _get_client():
@@ -44,6 +59,11 @@ class handler(BaseHTTPRequestHandler):
                 "piazza_password": piazza_password,
                 "piazza_course_id": course_id,
             }).execute()
+
+            try:
+                _trigger_workflow()
+            except Exception:
+                pass  # don't fail signup if workflow trigger fails
 
             self._respond(200, {"success": True})
 
