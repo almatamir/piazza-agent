@@ -1,5 +1,3 @@
-from config import settings
-
 SYSTEM_SUMMARIZER = """
 You are an AI assistant that summarizes Piazza forum posts for university students.
 You receive a list of questions and instructor answers from a course forum.
@@ -19,8 +17,8 @@ Formatting rules:
 """
 
 
-def _post_url(nr: int | str) -> str:
-    return f"https://piazza.com/class/{settings.PIAZZA_COURSE_ID}?cid={nr}"
+def _post_url(nr: int | str, course_id: str) -> str:
+    return f"https://piazza.com/class/{course_id}?cid={nr}"
 
 
 def build_merge_prompt(summaries: list[str], tag: str) -> str:
@@ -45,7 +43,7 @@ The final report should read as if it was written from all posts at once.
 """
 
 
-def build_summary_prompt(posts: list[dict], tag: str, assignment_context: str = "") -> str:
+def build_summary_prompt(posts: list[dict], tag: str, assignment_context: str = "", course_id: str = "") -> str:
     context_block = ""
     if assignment_context:
         context_block = f"""
@@ -58,7 +56,7 @@ def build_summary_prompt(posts: list[dict], tag: str, assignment_context: str = 
     posts_block = ""
     for p in posts:
         answer_text = p["instructor_answer"] if p["instructor_answer"] else "No instructor answer yet"
-        url = _post_url(p["nr"])
+        url = _post_url(p["nr"], course_id)
         posts_block += (
             f"[#{p['nr']}]({url}) — {p['subject']}\n"
             f"Q: {p['body'][:600]}\n"

@@ -7,13 +7,13 @@ logger = logging.getLogger(__name__)
 BATCH_SIZE = 13
 
 
-def _summarize_batch(posts: list[dict], tag: str, batch_num: int, assignment_context: str = "") -> str:
+def _summarize_batch(posts: list[dict], tag: str, batch_num: int, assignment_context: str = "", course_id: str = "") -> str:
     logger.info("Summarizing batch %d (%d posts)", batch_num, len(posts))
-    prompt = build_summary_prompt(posts, tag, assignment_context)
+    prompt = build_summary_prompt(posts, tag, assignment_context, course_id)
     return chat(prompt, system=SYSTEM_SUMMARIZER)
 
 
-def summarize(posts: list[dict], tag: str, assignment_context: str = "") -> str:
+def summarize(posts: list[dict], tag: str, assignment_context: str = "", course_id: str = "") -> str:
     if not posts:
         return f"No posts found for tag '{tag}'."
 
@@ -21,7 +21,7 @@ def summarize(posts: list[dict], tag: str, assignment_context: str = "") -> str:
 
     if len(posts) <= BATCH_SIZE:
         try:
-            result = chat(build_summary_prompt(posts, tag, assignment_context), system=SYSTEM_SUMMARIZER)
+            result = chat(build_summary_prompt(posts, tag, assignment_context, course_id), system=SYSTEM_SUMMARIZER)
             logger.info("Summary generated successfully")
             return result
         except Exception as e:
@@ -34,7 +34,7 @@ def summarize(posts: list[dict], tag: str, assignment_context: str = "") -> str:
     batch_summaries = []
     for i, batch in enumerate(batches, 1):
         try:
-            summary = _summarize_batch(batch, tag, i, assignment_context)
+            summary = _summarize_batch(batch, tag, i, assignment_context, course_id)
             batch_summaries.append(summary)
         except Exception as e:
             logger.error("Batch %d failed: %s", i, e)

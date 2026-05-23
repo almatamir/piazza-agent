@@ -2,10 +2,12 @@
   "version": 2,
   "builds": [
     { "src": "api/signup.py", "use": "@vercel/python" },
+    { "src": "api/unsubscribe.py", "use": "@vercel/python" },
     { "src": "index.html", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/api/signup", "dest": "api/signup.py" },
+    { "src": "/api/unsubscribe", "dest": "api/unsubscribe.py" },
     { "src": "/", "dest": "index.html" }
   ]
 }

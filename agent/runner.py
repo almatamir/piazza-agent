@@ -1,13 +1,11 @@
 import logging
-import os
 from datetime import datetime
 
-from scraper.piazza_client import get_network, fetch_posts
+from scraper.piazza_client import get_network, fetch_posts, get_course_name
 from scraper.parser import parse_posts
 from ai.summarizer import summarize
 from notifier.email_sender import send_report
 from storage.database import get_all_active_users, update_last_post_nr, get_goals
-from config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -20,17 +18,9 @@ def run_for_user(user: dict) -> None:
 
     logger.info("Running for user %s (course: %s, last_nr: %d)", email, course_id, last_post_nr)
 
-    import os as _os
-    _os.environ["PIAZZA_EMAIL"] = user["piazza_email"]
-    _os.environ["PIAZZA_PASSWORD"] = user["piazza_password"]
-    _os.environ["PIAZZA_COURSE_ID"] = course_id
-
-    from importlib import reload
-    from config import settings as s
-    reload(s)
-
     try:
-        network = get_network()
+        network = get_network(user["piazza_email"], user["piazza_password"], course_id)
+        course_name = get_course_name(network)
         raw_posts = fetch_posts(network)
         all_posts = parse_posts(raw_posts)
     except Exception as e:
@@ -52,28 +42,24 @@ def run_for_user(user: dict) -> None:
         assignment_context = "Assignment topics:\n" + "\n".join(f"- {t}" for t in topics)
 
     try:
-        summary = summarize(new_posts, tag="all", assignment_context=assignment_context)
+        summary = summarize(new_posts, tag="all", assignment_context=assignment_context, course_id=course_id)
     except Exception as e:
         logger.error("Summarization failed for user %s: %s", email, e)
         return
 
     timestamp = datetime.now().strftime("%Y-%m-%d")
-    subject = f"{settings.EMAIL_SUBJECT} — {timestamp}"
+    course_label = f" | {course_name}" if course_name else ""
+    subject = f"Piazza Report{course_label} — {timestamp}"
     full_report = (
-        f"# Piazza Report\n\n"
-        + summary
+        summary
         + f"\n\n---\n\nGenerated: {datetime.now().strftime('%Y-%m-%d %H:%M')} | New posts: {len(new_posts)}"
     )
 
-    original_notify = settings.NOTIFY_EMAIL
-    settings.NOTIFY_EMAIL = email
     try:
-        send_report(subject, full_report)
+        send_report(to=email, subject=subject, body_md=full_report)
     except Exception as e:
         logger.error("Failed to send email to %s: %s", email, e)
-        settings.NOTIFY_EMAIL = original_notify
         return
-    settings.NOTIFY_EMAIL = original_notify
 
     max_nr = max(p["nr"] for p in all_posts)
     try:

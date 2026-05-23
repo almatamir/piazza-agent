@@ -1,7 +1,6 @@
 import logging
 import re
 import resend
-
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -27,20 +26,25 @@ def _markdown_to_html(md: str) -> str:
     return "\n".join(html_lines)
 
 
-def send_report(subject: str, body_md: str) -> None:
+def send_report(to: str, subject: str, body_md: str) -> None:
     if not settings.RESEND_API_KEY:
         raise ValueError("RESEND_API_KEY must be set in .env")
 
     resend.api_key = settings.RESEND_API_KEY
 
+    header_html = (
+        '<h1 style="font-family:sans-serif;font-size:28px;font-weight:700;'
+        'margin:0 0 20px 0;color:#111;">Piazza Report</h1>'
+    )
+
     try:
         resend.Emails.send({
             "from": settings.EMAIL_FROM,
-            "to": settings.NOTIFY_EMAIL,
+            "to": to,
             "subject": subject,
-            "html": _markdown_to_html(body_md),
-            "text": body_md,
+            "html": header_html + "\n" + _markdown_to_html(body_md),
+            "text": "Piazza Report\n\n" + body_md,
         })
-        logger.info("Report emailed to %s", settings.NOTIFY_EMAIL)
+        logger.info("Report emailed to %s", to)
     except Exception as e:
         raise RuntimeError(f"Failed to send email via Resend: {e}") from e

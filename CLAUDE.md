@@ -14,9 +14,15 @@ An autonomous AI agent that scrapes Piazza posts, summarizes them with Groq AI, 
 - `scraper/piazza_client.py` — Piazza login and post fetching
 - `scraper/parser.py` — converts raw posts to structured dicts
 - `ai/summarizer.py` — Groq-powered summarization
-- `agent/agent.py` — main pipeline orchestration
-- `agent/scheduler.py` — APScheduler runs at configured times
-- `notifier/email_sender.py` — Gmail SMTP delivery
+- `agent/runner.py` — main pipeline: fetches users from Supabase, runs the agent for each
+- `agent/run.py` — entry point called by GitHub Actions cron
+- `notifier/email_sender.py` — Resend API email delivery
+- `storage/database.py` — Supabase CRUD (users, checkpoints, goals)
+- `ui/index.html` + `ui/api/signup.py` — Vercel-hosted signup page
+
+## Scheduling
+Reports run via GitHub Actions cron (`.github/workflows/agent.yml`) at 06:00 and 14:00 UTC.
+No local scheduler — do not add APScheduler or similar.
 
 ## .env vs .env.example
 - `.env` — real credentials, never committed (gitignored)
@@ -33,4 +39,4 @@ Format: `[#nr](https://piazza.com/class/{course_id}?cid={nr})`
 - Never write a claim or summary point without citing its source post
 
 ## Error Handling
-Use try/except on all external calls (Piazza API, Groq API, SMTP). Log warnings for recoverable errors, raise RuntimeError for fatal ones. Never silently swallow exceptions.
+Use try/except on all external calls (Piazza API, Groq API, Resend). Log warnings for recoverable errors, raise RuntimeError for fatal ones. Never silently swallow exceptions.
