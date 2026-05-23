@@ -1,0 +1,9 @@
+piazza-api==1.3
+groq
+apscheduler
+streamlit
+python-dotenv
+jinja2
+pymupdf
+supabase
+resend
