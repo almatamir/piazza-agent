@@ -7,6 +7,7 @@ from supabase import create_client
 
 
 def _trigger_workflow() -> None:
+    # GITHUB_TOKEN expires ~2026-07-23. Renew at: GitHub → Settings → Developer settings → Fine-grained tokens
     token = os.environ.get("GITHUB_TOKEN", "")
     repo = os.environ.get("GITHUB_REPO", "")
     if not token or not repo:
