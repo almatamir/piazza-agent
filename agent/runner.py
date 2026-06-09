@@ -1,8 +1,9 @@
 import logging
 import time
+from collections import defaultdict
 from datetime import datetime
 
-from scraper.piazza_client import get_network, fetch_posts, get_course_name
+from scraper.piazza_client import piazza_login, get_network, fetch_posts, get_course_name
 from scraper.parser import parse_posts
 from ai.summarizer import summarize
 from notifier.email_sender import send_report
@@ -11,7 +12,7 @@ from storage.database import get_all_active_users, update_last_post_nr, get_goal
 logger = logging.getLogger(__name__)
 
 
-def run_for_user(user: dict) -> None:
+def run_for_user(user: dict, piazza_session) -> None:
     user_id = user["id"]
     email = user["email"]
     last_post_nr = user.get("last_post_nr") or 0
@@ -20,7 +21,7 @@ def run_for_user(user: dict) -> None:
     logger.info("Running for user %s (course: %s, last_nr: %s)", email, course_id, last_post_nr)
 
     try:
-        network = get_network(user["piazza_email"], user["piazza_password"], course_id)
+        network = get_network(piazza_session, course_id)
         course_name = get_course_name(network)
         raw_posts = fetch_posts(network, since_nr=last_post_nr)
         new_posts = parse_posts(raw_posts)
@@ -81,12 +82,25 @@ def run_all() -> None:
         logger.info("No active users found")
         return
 
-    logger.info("Processing %d users", len(users))
+    # Group by piazza_email so we login once per account
+    by_account = defaultdict(list)
     for user in users:
+        by_account[user["piazza_email"]].append(user)
+
+    logger.info("Processing %d users across %d Piazza account(s)", len(users), len(by_account))
+
+    for piazza_email, account_users in by_account.items():
         try:
-            run_for_user(user)
+            piazza_session = piazza_login(piazza_email, account_users[0]["piazza_password"])
         except Exception as e:
-            logger.error("Unexpected error for user %s: %s", user.get("email"), e)
-        time.sleep(15)
+            logger.error("Failed to login to Piazza as %s: %s", piazza_email, e)
+            continue
+
+        for user in account_users:
+            try:
+                run_for_user(user, piazza_session)
+            except Exception as e:
+                logger.error("Unexpected error for user %s: %s", user.get("email"), e)
+            time.sleep(10)
 
     logger.info("Runner finished")

@@ -6,18 +6,21 @@ from piazza_api.exceptions import AuthenticationError, RequestError
 logger = logging.getLogger(__name__)
 
 
-def get_network(piazza_email: str, piazza_password: str, course_id: str):
+def piazza_login(piazza_email: str, piazza_password: str) -> Piazza:
     try:
         p = Piazza()
         p.user_login(email=piazza_email, password=piazza_password)
         logger.info("Logged in to Piazza as %s", piazza_email)
+        return p
     except AuthenticationError as e:
         raise RuntimeError(f"Piazza login failed for {piazza_email}: {e}") from e
     except Exception as e:
         raise RuntimeError(f"Unexpected error during Piazza login: {e}") from e
 
+
+def get_network(piazza_session: Piazza, course_id: str):
     try:
-        network = p.network(course_id)
+        network = piazza_session.network(course_id)
         logger.info("Connected to course: %s", course_id)
         return network
     except Exception as e:
