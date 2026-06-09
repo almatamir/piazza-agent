@@ -1,10 +1,12 @@
 import logging
+import time
 from ai.groq_client import chat
 from ai.prompts import SYSTEM_SUMMARIZER, build_summary_prompt, build_merge_prompt
 
 logger = logging.getLogger(__name__)
 
-BATCH_SIZE = 13
+BATCH_SIZE = 25
+BATCH_DELAY = 15  # seconds between API calls to avoid TPM rate limits
 
 
 def _summarize_batch(posts: list[dict], tag: str, batch_num: int, assignment_context: str = "", course_id: str = "") -> str:
@@ -36,6 +38,9 @@ def summarize(posts: list[dict], tag: str, assignment_context: str = "", course_
         try:
             summary = _summarize_batch(batch, tag, i, assignment_context, course_id)
             batch_summaries.append(summary)
+            if i < len(batches):
+                logger.info("Waiting %ds before next batch to respect rate limits", BATCH_DELAY)
+                time.sleep(BATCH_DELAY)
         except Exception as e:
             logger.error("Batch %d failed: %s", i, e)
             raise
@@ -59,6 +64,7 @@ def _pairwise_merge(summaries: list[str], tag: str) -> str:
                 logger.info("Merge round %d: combining summaries %d and %d", round_num, i + 1, i + 2)
                 merged = chat(build_merge_prompt([summaries[i], summaries[i + 1]], tag), system=SYSTEM_SUMMARIZER)
                 next_round.append(merged)
+                time.sleep(BATCH_DELAY)
             else:
                 next_round.append(summaries[i])
         summaries = next_round
