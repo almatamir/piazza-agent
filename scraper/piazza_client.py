@@ -58,12 +58,21 @@ def fetch_posts(network) -> list[dict]:
 
     posts = []
     for post_id in all_ids:
-        try:
-            posts.append(network.get_post(post_id))
-        except RequestError as e:
-            logger.warning("Skipping post %s — request error: %s", post_id, e)
-        except Exception as e:
-            logger.warning("Skipping post %s — unexpected error: %s", post_id, e)
+        for attempt in range(4):
+            try:
+                posts.append(network.get_post(post_id))
+                break
+            except RequestError as e:
+                if "too fast" in str(e).lower() and attempt < 3:
+                    wait = 5 * (attempt + 1)
+                    logger.info("Rate limited — waiting %ds before retry (post %s)", wait, post_id)
+                    time.sleep(wait)
+                else:
+                    logger.warning("Skipping post %s — request error: %s", post_id, e)
+                    break
+            except Exception as e:
+                logger.warning("Skipping post %s — unexpected error: %s", post_id, e)
+                break
         time.sleep(1.5)
 
     logger.info("Successfully fetched %d posts", len(posts))
