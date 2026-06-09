@@ -31,14 +31,6 @@ def get_course_name(network) -> str:
         info = network._rpc.request("network.get", {"id": network._nid})
         result = info.get("result", {})
         name = result.get("name") or result.get("num") or ""
-        if name.strip():
-            return name.strip()
-    except Exception:
-        pass
-    try:
-        info = network.get_info()
-        result = info.get("result", {})
-        name = result.get("name") or result.get("num") or ""
         return name.strip()
     except Exception as e:
         logger.warning("Could not fetch course name: %s", e)
