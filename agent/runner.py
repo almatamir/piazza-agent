@@ -22,13 +22,11 @@ def run_for_user(user: dict) -> None:
     try:
         network = get_network(user["piazza_email"], user["piazza_password"], course_id)
         course_name = get_course_name(network)
-        raw_posts = fetch_posts(network)
-        all_posts = parse_posts(raw_posts)
+        raw_posts = fetch_posts(network, since_nr=last_post_nr)
+        new_posts = parse_posts(raw_posts)
     except Exception as e:
         logger.error("Failed to fetch posts for user %s: %s", email, e)
         return
-
-    new_posts = [p for p in all_posts if p["nr"] > last_post_nr]
 
     if not new_posts:
         logger.info("No new posts for user %s — skipping", email)
@@ -62,7 +60,7 @@ def run_for_user(user: dict) -> None:
         logger.error("Failed to send email to %s: %s", email, e)
         return
 
-    max_nr = max(p["nr"] for p in all_posts)
+    max_nr = max(p["nr"] for p in new_posts)
     try:
         update_last_post_nr(user_id, max_nr)
     except Exception as e:

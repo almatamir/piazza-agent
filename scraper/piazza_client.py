@@ -37,7 +37,7 @@ def get_course_name(network) -> str:
         return ""
 
 
-def fetch_posts(network) -> list[dict]:
+def fetch_posts(network, since_nr: int = 0) -> list[dict]:
     try:
         feed = network.get_feed(limit=999, offset=0)
     except RequestError as e:
@@ -45,8 +45,15 @@ def fetch_posts(network) -> list[dict]:
     except Exception as e:
         raise RuntimeError(f"Unexpected error fetching feed: {e}") from e
 
-    all_ids = [item["id"] for item in feed.get("feed", [])]
-    logger.info("Fetching %d posts", len(all_ids))
+    feed_items = feed.get("feed", [])
+    new_items = [item for item in feed_items if item.get("nr", 0) > since_nr]
+    logger.info("Feed: %d total posts, %d new since nr %d", len(feed_items), len(new_items), since_nr)
+
+    if not new_items:
+        return []
+
+    all_ids = [item["id"] for item in new_items]
+    logger.info("Fetching %d new posts", len(all_ids))
 
     posts = []
     for post_id in all_ids:
