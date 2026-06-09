@@ -40,11 +40,27 @@ def summarize(posts: list[dict], tag: str, assignment_context: str = "", course_
             logger.error("Batch %d failed: %s", i, e)
             raise
 
-    logger.info("Merging %d batch summaries", len(batch_summaries))
+    logger.info("Merging %d batch summaries (pairwise)", len(batch_summaries))
     try:
-        merged = chat(build_merge_prompt(batch_summaries, tag), system=SYSTEM_SUMMARIZER)
+        merged = _pairwise_merge(batch_summaries, tag)
         logger.info("Merge completed successfully")
         return merged
     except Exception as e:
         logger.error("Merge failed: %s", e)
         raise
+
+
+def _pairwise_merge(summaries: list[str], tag: str) -> str:
+    round_num = 1
+    while len(summaries) > 1:
+        next_round = []
+        for i in range(0, len(summaries), 2):
+            if i + 1 < len(summaries):
+                logger.info("Merge round %d: combining summaries %d and %d", round_num, i + 1, i + 2)
+                merged = chat(build_merge_prompt([summaries[i], summaries[i + 1]], tag), system=SYSTEM_SUMMARIZER)
+                next_round.append(merged)
+            else:
+                next_round.append(summaries[i])
+        summaries = next_round
+        round_num += 1
+    return summaries[0]
