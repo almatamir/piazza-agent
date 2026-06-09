@@ -64,7 +64,7 @@ def fetch_posts(network) -> list[dict]:
             logger.warning("Skipping post %s — request error: %s", post_id, e)
         except Exception as e:
             logger.warning("Skipping post %s — unexpected error: %s", post_id, e)
-        time.sleep(0.3)
+        time.sleep(1.5)
 
     logger.info("Successfully fetched %d posts", len(posts))
     return posts

@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import datetime
 
 from scraper.piazza_client import get_network, fetch_posts, get_course_name
@@ -88,5 +89,6 @@ def run_all() -> None:
             run_for_user(user)
         except Exception as e:
             logger.error("Unexpected error for user %s: %s", user.get("email"), e)
+        time.sleep(15)
 
     logger.info("Runner finished")
