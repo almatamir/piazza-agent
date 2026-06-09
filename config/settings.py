@@ -11,7 +11,6 @@ GROQ_MODEL = "llama-3.3-70b-versatile"
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 
-# ─── Resend (email sender) ────────────────────────────────
-RESEND_API_KEY = os.getenv("RESEND_API_KEY")
-EMAIL_FROM = "Piazza Agent <onboarding@resend.dev>"
-EMAIL_SUBJECT = "Piazza Report — Course Summary"
+# ─── Gmail SMTP (email sender) ───────────────────────────
+GMAIL_USER = os.getenv("GMAIL_USER")
+GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")

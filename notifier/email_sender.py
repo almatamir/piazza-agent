@@ -1,6 +1,8 @@
 import logging
 import re
-import resend
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -27,24 +29,26 @@ def _markdown_to_html(md: str) -> str:
 
 
 def send_report(to: str, subject: str, body_md: str) -> None:
-    if not settings.RESEND_API_KEY:
-        raise ValueError("RESEND_API_KEY must be set in .env")
-
-    resend.api_key = settings.RESEND_API_KEY
+    if not settings.GMAIL_USER or not settings.GMAIL_APP_PASSWORD:
+        raise ValueError("GMAIL_USER and GMAIL_APP_PASSWORD must be set in .env")
 
     header_html = (
         '<h1 style="font-family:sans-serif;font-size:28px;font-weight:700;'
         'margin:0 0 20px 0;color:#111;">Piazza Report</h1>'
     )
+    html_body = header_html + "\n" + _markdown_to_html(body_md)
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"Piazza Agent <{settings.GMAIL_USER}>"
+    msg["To"] = to
+    msg.attach(MIMEText("Piazza Report\n\n" + body_md, "plain"))
+    msg.attach(MIMEText(html_body, "html"))
 
     try:
-        resend.Emails.send({
-            "from": settings.EMAIL_FROM,
-            "to": to,
-            "subject": subject,
-            "html": header_html + "\n" + _markdown_to_html(body_md),
-            "text": "Piazza Report\n\n" + body_md,
-        })
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(settings.GMAIL_USER, settings.GMAIL_APP_PASSWORD)
+            server.sendmail(settings.GMAIL_USER, to, msg.as_string())
         logger.info("Report emailed to %s", to)
     except Exception as e:
-        raise RuntimeError(f"Failed to send email via Resend: {e}") from e
+        raise RuntimeError(f"Failed to send email via Gmail SMTP: {e}") from e
