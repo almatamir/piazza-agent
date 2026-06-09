@@ -22,8 +22,11 @@ def _post_url(nr: int | str, course_id: str) -> str:
 
 
 def build_merge_prompt(summaries: list[str], tag: str) -> str:
+    # Cap each summary so total prompt stays under the fallback model's 6k token limit.
+    # ~4 chars per token, targeting ≤4000 tokens for summaries → 16000 chars total.
+    max_chars = max(500, 16000 // len(summaries))
     parts = "\n\n---\n\n".join(
-        f"Batch {i+1}:\n{s}" for i, s in enumerate(summaries)
+        f"Batch {i+1}:\n{s[:max_chars]}" for i, s in enumerate(summaries)
     )
     return f"""
 Below are {len(summaries)} partial summaries of Piazza posts tagged "{tag}".
