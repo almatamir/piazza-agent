@@ -21,7 +21,7 @@ def get_client() -> Groq:
     return _client
 
 
-def chat(prompt: str, system: str = "") -> str:
+def chat(prompt: str, system: str = "", max_tokens: int = 1500) -> str:
     client = get_client()
     messages = []
     if system:
@@ -34,6 +34,7 @@ def chat(prompt: str, system: str = "") -> str:
                 model=model,
                 messages=messages,
                 temperature=0.3,
+                max_tokens=max_tokens,
             )
             if model != settings.GROQ_MODEL:
                 logger.warning("Used fallback model %s (primary model rate limited)", model)

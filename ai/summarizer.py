@@ -12,7 +12,7 @@ BATCH_DELAY = 15  # seconds between API calls to avoid TPM rate limits
 def _summarize_batch(posts: list[dict], tag: str, batch_num: int, assignment_context: str = "", course_id: str = "") -> str:
     logger.info("Summarizing batch %d (%d posts)", batch_num, len(posts))
     prompt = build_summary_prompt(posts, tag, assignment_context, course_id)
-    return chat(prompt, system=SYSTEM_SUMMARIZER)
+    return chat(prompt, system=SYSTEM_SUMMARIZER, max_tokens=1200)
 
 
 def summarize(posts: list[dict], tag: str, assignment_context: str = "", course_id: str = "") -> str:
@@ -23,7 +23,7 @@ def summarize(posts: list[dict], tag: str, assignment_context: str = "", course_
 
     if len(posts) <= BATCH_SIZE:
         try:
-            result = chat(build_summary_prompt(posts, tag, assignment_context, course_id), system=SYSTEM_SUMMARIZER)
+            result = chat(build_summary_prompt(posts, tag, assignment_context, course_id), system=SYSTEM_SUMMARIZER, max_tokens=2500)
             logger.info("Summary generated successfully")
             return result
         except Exception as e:
@@ -62,7 +62,7 @@ def _pairwise_merge(summaries: list[str], tag: str) -> str:
         for i in range(0, len(summaries), 2):
             if i + 1 < len(summaries):
                 logger.info("Merge round %d: combining summaries %d and %d", round_num, i + 1, i + 2)
-                merged = chat(build_merge_prompt([summaries[i], summaries[i + 1]], tag), system=SYSTEM_SUMMARIZER)
+                merged = chat(build_merge_prompt([summaries[i], summaries[i + 1]], tag), system=SYSTEM_SUMMARIZER, max_tokens=2500)
                 next_round.append(merged)
                 time.sleep(BATCH_DELAY)
             else:
