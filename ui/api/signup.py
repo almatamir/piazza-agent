@@ -54,11 +54,11 @@ class handler(BaseHTTPRequestHandler):
                 return self._respond(400, {"error": "Invalid Piazza URL."})
 
             client = _get_client()
-            client.table("users").insert({
-                "email": email,
-                "piazza_email": piazza_email,
-                "piazza_password": piazza_password,
-                "piazza_course_id": course_id,
+            client.rpc("add_user", {
+                "p_email": email,
+                "p_piazza_email": piazza_email,
+                "p_piazza_password": piazza_password,
+                "p_piazza_course_id": course_id,
             }).execute()
 
             try:

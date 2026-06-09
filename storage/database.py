@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 def get_all_active_users() -> list[dict]:
     try:
-        res = get_client().table("users").select("*").eq("active", True).execute()
+        res = get_client().rpc("get_active_users").execute()
         return res.data or []
     except Exception as e:
         raise RuntimeError(f"Failed to fetch users: {e}") from e
@@ -22,13 +22,13 @@ def update_last_post_nr(user_id: str, last_post_nr: int) -> None:
 
 def add_user(email: str, piazza_email: str, piazza_password: str, piazza_course_id: str) -> dict:
     try:
-        res = get_client().table("users").insert({
-            "email": email,
-            "piazza_email": piazza_email,
-            "piazza_password": piazza_password,
-            "piazza_course_id": piazza_course_id,
+        res = get_client().rpc("add_user", {
+            "p_email": email,
+            "p_piazza_email": piazza_email,
+            "p_piazza_password": piazza_password,
+            "p_piazza_course_id": piazza_course_id,
         }).execute()
-        return res.data[0]
+        return {"id": res.data}
     except Exception as e:
         raise RuntimeError(f"Failed to add user: {e}") from e
 
